@@ -1,0 +1,113 @@
+Kernel Regression — with example and code
+In this article, how kernel function is used as a weighing function to develop non-parametric regression model is discussed. In the beginning of the article, a brief discussion about properties of kernel functions and steps to build kernels around data points are presented.
+
+Kernel Function
+In non-parametric statistics, a kernel is a weighting function which satisfies the following properties.
+
+A kernel function must be symmetrical. Mathematically this property can be expressed as K (-u) = K (+u). The symmetric property of kernel function enables its maximum value (max(K(u)) to lie in the middle of the curve.
+
+An illustration of Gaussian kernel function
+2. The area under the curve of the function must be equal to one. Mathematically, this property is expressed as:
+
+
+3. Value of kernel function can not be negative i.e. K(u) ≥ 0 for all −∞ < u < ∞.
+
+Kernel Estimation
+In this article, Gaussian kernel function is used to calculate kernels for the data points. The equation for Gaussian kernel is:
+
+
+Where xi is the observed data point. x is the value where kernel function is computed and h is called the bandwidth. Bandwidth in kernel regression is called the smoothing parameter because it controls variance and bias in the output. The effect of bandwidth value on model prediction is discussed later in this article.
+
+Example
+Consider there are six data points each showing mark obtained by individual student in a subject. The steps to construct kernel at each data point using Gaussian kernel function is mentioned below.
+
+xi = {65, 75, 67, 79, 81, 91} Where x1 = 65, x2 = 75 … x6 = 91.
+
+Three inputs are required to construct a kernel curve around a data point.
+
+i. Observation data point, xi
+
+ii. Value of h
+
+iii. Linearly spaced series of data points which includes observed data points where K values need to be estimated. As for example, Xj = {50,51,52 …. 99}
+
+The steps to calculate K values for all values of Xj for a given value of xi and h is shown in the table below, where xi = 65 and h = 5.5. The last column in the table shows the ordinates of the kernel for xi = 65.
+
+
+Xj and K are plotted below to visualize the kernel. Note that x-axis in the plot is Xj on which kernel curves are built at xi as mean and h as standard deviation as in the case of Gaussian distribution.
+
+
+Similarly, at all six observed data points, kernel values are estimated and plotted as below. It is observed that value of K is nearly 0 for Xj values those are quite far from xi. For instance, kernel value at Xj = 99 is zero for xi = 65.
+
+
+Kernels plotted for all xi
+Kernel Regression
+In this section, kernel values are used to derive weights to predict outputs from given inputs. Steps involved to calculate weights and finally to use them in predicting output variable, y from predictor variable, x is explained in detail in the following sections. Let’s start with an example to clearly understand how kernel regression works.
+
+Example
+In this example, a kernel regression model is developed to predict river flow from catchment area. As shown in the data below, there exists a non-linear relationship between catchment area (in square mile) and river flow (in cubic feet per sec). The output, y is the river flow and input, x is the catchment area in this example.
+
+
+Example data set to build kernel regression
+Kernel as Weighing Function
+Initially, kernels are estimated as described in the previous sections using a bandwidth value for all inputs. Then used them to calculate weights. In this example, a bandwidth value of 10 is used to explain kernel regression. However, bandwidth value needs to be optimized to fit the data appropriately. The plotted kernels at different values of x are shown in the figure below.
+
+It is important to understand that kernels are developed at all values of xi. The fundamental calculation behind kernel regression is to estimate weighted sum of all observed y values for a given predictor value, xi. Weights are nothing but the kernel values, scaled between 0 and 1, intersecting the line perpendicular to x-axis at given xi (as shown in the figure below for this example).
+
+
+Scattered plot showing input-output data (above) and kernels at all inputs using a bandwidth of 10 (below)
+
+Intersection of predictor variable, area = 50 with surrounding kernels
+The star marks in the above show the intersection points and their corresponding kernel values. The kernel values are scaled between 0 and 1 to use them as weights. Following equation is used to scale the kernel values between 0 and 1.
+
+
+Where wi is the weight for input i and n is the total number of data points. The output y for x = 50 is computed as the weighted sum of all observed y values as shown in the equation below.
+
+
+Where y11 is the river flow for Area = 11 and w11 is the corresponding weight and it goes like this for other terms in the equation.
+
+Following table shows the steps involved in calculating weights from kernel values for input x = 50. The last column in the table provides final output i.e. computed river flow from an area of 50 square miles.
+
+
+Similarly, for all values of x, weights are estimated as mentioned in the table above and used to calculate corresponding y values. The predicted river flow values for different area inputs are shown in the table as well as in the plot below.
+
+
+Computed river flow from kernel regression
+Bandwidth Sensitivity
+Above calculation is based on a bandwidth value of 10. Kernel bandwidth influences prediction by a huge margin as shown in the figures below.
+
+
+Kernel regression output for bandwidth value = 5
+
+Kernel regression output for bandwidth value = 10
+
+Kernel regression output for bandwidth value = 15
+A small value of bandwidth over-fits data because of narrower kernel which gives high weight to the ‘yi’ of ‘xi’ in the training data set when predicted for xi. Low bandwidth produces lot of variance in the output which does not look realistic whereas high value of bandwidth over-smooths the output which fails to reveal true relationship between input and output. Therefore to attain a bias-variance trade-off, bandwidth should be optimized in kernel regression.
+
+R-code for Kernel Regression
+#Kernel regression
+data <- data.frame(Area = c(11,22,33,44,50,56,67,70,78,89,90,100),        RiverFlow = c(2337,2750,2301,2500,1700,2100,1100,1750,1000,1642, 2000,1932))                                 
+
+x <- data$Area
+y <- data$RiverFlow
+#function to calculate Gaussian kernel
+gausinKernel <- function(x,b){
+  K <- (1/((sqrt(2*pi))))*exp(-0.5 *(x/b)^2)
+  return(K)
+}
+b <- 10 #bandwidth
+kdeEstimateyX <- seq(5,110,1)
+ykernel <- NULL
+for(xesti in kdeEstimateyX){
+  xx <-  xesti - x
+  K <-gausinKernel(xx,b)
+  Ksum <- sum(K)
+  weight <- K/Ksum
+  yk <- sum(weight*y)
+  xkyk <- c(xesti,yk)
+  ykernel <- rbind(ykernel,xkyk)
+}
+plot(x,y,xlab = "Area", ylab = "Flow", col = 'blue', cex = 2)
+lines(ykernel[,1],ykernel[,2], col = 'red', lwd = 2)
+References
+R. Tibshirani and L. Wasserman, Nonparametric Regression, Statistical Machine Learning (2015) — lecture note of Carnegie Mellon University
